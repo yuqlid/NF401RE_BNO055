@@ -60,7 +60,9 @@ C:/Users/yuki/STM32Cube/Repository/STM32Cube_FW_F4_V1.25.0/Drivers/STM32F4xx_HAL
 C:/Users/yuki/STM32Cube/Repository/STM32Cube_FW_F4_V1.25.0/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
 C:/Users/yuki/STM32Cube/Repository/STM32Cube_FW_F4_V1.25.0/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c \
 C:/Users/yuki/STM32Cube/Repository/STM32Cube_FW_F4_V1.25.0/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c \
-Src/system_stm32f4xx.c  
+Src/system_stm32f4xx.c \
+Src/syscalls.c \
+Src/sysmem.c  
 
 # ASM sources
 ASM_SOURCES =  \
@@ -182,6 +184,12 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	
 $(BUILD_DIR):
 	mkdir $@		
+	
+#######################################
+# Flash Program
+#######################################
+upload: build/$(TARGET).bin
+	openocd -f board/st_nucleo_f4.cfg -c "reset_config trst_only combined" -c "program build/$(TARGET).elf verify reset exit" # For openocd 0.9
 
 #######################################
 # clean up
