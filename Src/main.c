@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "bno055.h"
+
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
@@ -38,7 +40,12 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+struct bno055_t bno055;
+u8 power_mode = BNO055_INIT_VALUE;
+s32 comres = BNO055_ERROR;
 
+struct bno055_accel_t accel_xyz;
+struct bno055_gyro_t gyro_xyz;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -61,6 +68,10 @@ HAL_UART_Transmit(&huart2, &ch, 1, 1);
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+void BNO055_delay_msek(u32 msek);
 
 /* USER CODE END PFP */
 
@@ -105,11 +116,33 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  /rintf("%s:%s\r\n",__DATE__, __TIME__);
+  HAL_Delay(10);
+
+  bno055.bus_write = BNO055_I2C_bus_write;
+  bno055.bus_read = BNO055_I2C_bus_read;
+  bno055.delay_msec = BNO055_delay_msek;
+  bno055.dev_addr = BNO055_I2C_ADDR1;
+
+  comres = bno055_init(&bno055);
+  comres += bno055_set_power_mode(power_mode);
+  comres += bno055_set_operation_mode(BNO055_OPERATION_MODE_AMG);
+  printf("bno055_status = %d\r\n", comres);
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    HAL_Delay(2);
+    comres += bno055_read_accel_xyz(&accel_xyz);
+    printf("%5d, %5d, %5d,", accel_xyz.x, accel_xyz.y, accel_xyz.z);
+    comres += bno055_read_gyro_xyz(&gyro_xyz);
+    printf("%5d, %5d, %5d\r\n", gyro_xyz.x, gyro_xyz.y, gyro_xyz.z);
+
+    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+
   }
   /* USER CODE END 3 */
 }
@@ -159,6 +192,35 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
+{
+    s32 BNO055_iERROR = BNO055_INIT_VALUE;
+    HAL_StatusTypeDef state;
+
+    state = HAL_I2C_Mem_Write(&hi2c1, dev_addr << 1, reg_addr, I2C_MEMADD_SIZE_8BIT, reg_data, cnt , 1000);
+    if(state!= HAL_OK){
+        BNO055_iERROR = BNO055_ERROR;
+    }
+    return (s8)BNO055_iERROR;
+}
+
+s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
+{
+    s32 BNO055_iERROR = BNO055_INIT_VALUE;
+    HAL_StatusTypeDef state;
+
+    state = HAL_I2C_Mem_Read(&hi2c1, dev_addr << 1, reg_addr, I2C_MEMADD_SIZE_8BIT, reg_data, cnt , 1000);
+    if(state != HAL_OK){
+        BNO055_iERROR = BNO055_ERROR;
+    }
+    return (s8)BNO055_iERROR;
+}
+
+void BNO055_delay_msek(u32 msek)
+{
+    /*Here you can write your own delay routine*/
+    HAL_Delay(msek);
+}
 /* USER CODE END 4 */
 
 /**

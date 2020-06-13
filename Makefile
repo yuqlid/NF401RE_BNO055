@@ -37,7 +37,6 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 BNO055_driver/bno055.c \
-BNO055_driver/bno055_support.c \
 Src/main.c \
 Src/gpio.c \
 Src/i2c.c \
@@ -114,8 +113,6 @@ AS_DEFS =
 C_DEFS =  \
 -DUSE_HAL_DRIVER \
 -DSTM32F401xE \
--DBNO055_API
-
 
 # AS includes
 AS_INCLUDES = 
